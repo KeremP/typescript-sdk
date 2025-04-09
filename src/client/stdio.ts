@@ -112,14 +112,20 @@ export class StdioClientTransport implements Transport {
       );
     }
 
+    // Basic validation - ensure command is not empty
+    if (!this._serverParams.command || this._serverParams.command.trim() === '') {
+      return Promise.reject(new Error("Invalid command: Command cannot be empty"));
+    }
+
     return new Promise((resolve, reject) => {
+      // Use spawn with shell: false to prevent command injection
       this._process = spawn(
         this._serverParams.command,
         this._serverParams.args ?? [],
         {
           env: this._serverParams.env ?? getDefaultEnvironment(),
           stdio: ["pipe", "pipe", this._serverParams.stderr ?? "inherit"],
-          shell: false,
+          shell: false, // Explicitly set shell: false to prevent command injection
           signal: this._abortController.signal,
           windowsHide: process.platform === "win32" && isElectron(),
           cwd: this._serverParams.cwd,
